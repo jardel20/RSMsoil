@@ -1,0 +1,7 @@
+{
+    "installOptions": {
+        "installFromRepository": false,
+        "libraryPath": "/home/jardel/R/x86_64-redhat-linux-gnu-library/4.5",
+        "installDependencies": true
+    }
+}

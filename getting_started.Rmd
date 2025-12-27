@@ -1,0 +1,192 @@
+---
+title: "Getting Started with RSMsoil"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with RSMsoil}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Response Surface Methodology for Soil Fertility Assessment
+
+This vignette demonstrates the complete workflow for response surface methodology (RSM) analysis using the **RSMsoil** package, following the methodology of Victor Hugo Alvarez V. (2008).
+
+## Installation
+
+```{r eval=FALSE}
+# Install from GitHub (when available)
+# devtools::install_github("user/RSMsoil")
+
+# For now, load the development version
+library(RSMsoil)
+```
+
+## Example: Soybean Dry Matter Response to P and S
+
+We'll analyze data from a greenhouse experiment studying soybean dry matter production as a function of phosphorus (P) and sulfur (S) doses.
+
+### Step 1: Load and Prepare Data
+
+```{r setup}
+library(RSMsoil)
+library(tibble)
+library(dplyr)
+
+# Create experimental data
+data <- tibble(
+  Y = c(6.66, 6.30, 6.32, 5.92, 6.09, 6.22, 5.29, 6.67, 5.67),
+  P = c(108, 108, 252, 252, 180, 18, 342, 108, 252),
+  S = c(36, 84, 36, 84, 60, 36, 84, 6, 114)
+)
+
+print(data)
+```
+
+### Step 2: Encode Variables to Coded Scale
+
+Variables must be transformed to coded scale (-1, 0, +1) for response surface analysis:
+
+```{r}
+# Define factor levels (low, center, high)
+levels_list <- list(
+  P = c(low = 18, center = 180, high = 342),
+  S = c(low = 6, center = 60, high = 114)
+)
+
+# Encode variables
+data_encoded <- encode_variables(data, factor_names = c("P", "S"), levels = levels_list)
+
+print(data_encoded)
+```
+
+### Step 3: Fit Response Surface Models
+
+Fit a second-order (quadratic) model:
+
+```{r}
+# Fit second-order model
+model_2nd <- fit_second_order(
+  data_encoded,
+  response = "Y",
+  factors = c("P_coded", "S_coded")
+)
+
+# Display model summary
+summary(model_2nd)
+```
+
+### Step 4: ANOVA Analysis
+
+Perform comprehensive ANOVA analysis:
+
+```{r}
+# ANOVA analysis
+anova_result <- anova_rsm(model_2nd, alpha = 0.10)
+
+print(anova_result)
+```
+
+### Step 5: Canonical Analysis
+
+Characterize the stationary point:
+
+```{r}
+# Canonical analysis
+canonical <- canonical_analysis(model_2nd)
+
+print(canonical)
+```
+
+### Step 6: Visualization
+
+Create response surface plots:
+
+```{r fig.width=7, fig.height=5}
+# Static contour plot
+plot_response_surface(model_2nd)
+```
+
+```{r fig.width=7, fig.height=5}
+# Isoquants
+plot_isoquants(model_2nd)
+```
+
+### Step 7: Path of Steepest Ascent
+
+Find the optimal direction for improvement:
+
+```{r}
+# Calculate steepest ascent path
+path <- steepest_path(model_2nd, n_steps = 5)
+
+print(path)
+```
+
+### Step 8: Optimization
+
+Find optimal factor levels:
+
+```{r}
+# Grid search for optimal point
+optimization <- get_optimal_factors(model_2nd, objective = "maximize", n_grid = 15)
+
+print(optimization$optimal_point)
+```
+
+### Step 9: Predictions
+
+Make predictions at new points:
+
+```{r}
+# Predict at specific points
+new_points <- tibble(P_coded = c(0, 0.5), S_coded = c(0, 0.5))
+predictions <- predict_rsm(model_2nd, new_data = new_points, se_fit = TRUE)
+
+print(predictions)
+```
+
+### Step 10: Model Diagnostics
+
+Validate model assumptions:
+
+```{r fig.width=10, fig.height=8}
+# Diagnostic plots
+diagnostics <- plot_diagnostics(model_2nd)
+
+# Display all diagnostic plots
+gridExtra::grid.arrange(
+  diagnostics$residuals_vs_fitted,
+  diagnostics$qq_plot,
+  diagnostics$scale_location,
+  diagnostics$residuals_vs_leverage,
+  ncol = 2
+)
+```
+
+## Interpretation of Results
+
+The analysis reveals:
+
+1. **Model Fit**: The second-order model explains the response adequately (R² = 0.8568)
+2. **Significant Terms**: Linear effects of P and S, plus their quadratic terms are significant
+3. **Surface Type**: The canonical analysis indicates the nature of the response surface
+4. **Optimal Point**: The stationary point provides the recommended factor levels
+5. **Practical Recommendations**: Decode the optimal point to natural scale for implementation
+
+## References
+
+Alvarez V., V. H. (2008). Avaliação da Fertilidade do Solo: Superfícies de Resposta - 
+Modelos Aproximativos para Expressar a Relação Fator-Resposta. Universidade Federal de Viçosa, Brazil.
+
+Box, G. E. P., & Wilson, K. B. (1951). On the experimental attainment of optimum conditions. 
+Journal of the Royal Statistical Society, 13, 1-45.
+
+Myers, R. H., Montgomery, D. C., & Anderson-Cook, C. M. (2016). Response Surface Methodology: 
+Process and Product Optimization Using Designed Experiments (3rd ed.). Wiley.
