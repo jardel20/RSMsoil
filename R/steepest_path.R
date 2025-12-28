@@ -97,6 +97,7 @@ steepest_path <- function(rsm_model, start_point = NULL, direction = "ascent",
   # Normalize gradient
   gradient_norm <- sqrt(sum(gradient^2))
   direction_vector <- gradient / gradient_norm
+  names(direction_vector) <- factors
 
   # Reverse direction if descent
   if (direction == "descent") {
@@ -124,6 +125,7 @@ steepest_path <- function(rsm_model, start_point = NULL, direction = "ascent",
   }
 
   # Create tibble with path data
+  colnames(path_coords) <- factors
   path_data <- tibble::as_tibble(path_coords)
   names(path_data) <- factors
   path_data <- path_data %>%

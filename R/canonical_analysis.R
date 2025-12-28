@@ -116,15 +116,40 @@ canonical_analysis <- function(rsm_model) {
   # Try to decode stationary point to natural scale
   stationary_natural <- NULL
   encoding_levels <- attr(rsm_model$data, "encoding_levels")
+  stationary_natural <- NULL
+
   if (!is.null(encoding_levels)) {
     stationary_natural <- purrr::map_dbl(factors, function(factor) {
+      # Caso 1: níveis não existem → ignora conversão
+      if (is.null(encoding_levels[[factor]])) {
+        return(NA_real_)
+      }
+
       lvl <- encoding_levels[[factor]]
-      center <- lvl["center"]
-      range <- (lvl["high"] - lvl["low"]) / 2
+
+      required <- c("low", "high", "center")
+      if (!all(required %in% names(lvl))) {
+        return(NA_real_)
+      }
+
+      if (is.na(x_stationary[factor])) {
+        return(NA_real_)
+      }
+
+      center <- as.numeric(lvl["center"])
+      range <- (as.numeric(lvl["high"]) - as.numeric(lvl["low"])) / 2
+
       center + x_stationary[factor] * range
     })
-    names(stationary_natural) <- factors
+
+    # Remove fatores não convertidos
+    if (all(is.na(stationary_natural))) {
+      stationary_natural <- NULL
+    } else {
+      names(stationary_natural) <- factors
+    }
   }
+
 
   # Create result object
   result <- list(
