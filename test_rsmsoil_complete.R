@@ -1,4 +1,5 @@
 rm(list = ls())
+
 packages_required <- c("tibble", "dplyr", "tidyr", "purrr", "ggplot2", "plotly", "RSMsoil")
 
 for (pkg in packages_required) {
@@ -79,7 +80,7 @@ print(model_2nd$coefficients)
 # SEÇÃO 5: ANÁLISE DE VARIÂNCIA (ANOVA)
 anova_result <- anova_rsm(model_2nd, alpha = 0.10)
 
-cat("  F-estatístico:", round(anova_result$model_significance$f_statistic, 4), "\n")
+message("  F-estatístico:", round(anova_result$model_significance$f_statistic, 4), "\n")
 cat("  P-valor:", round(anova_result$model_significance$p_value, 4), "\n")
 cat("  Significante:", anova_result$model_significance$significant, "\n\n")
 cat("Coeficientes Significativos (α = 0.10):\n")
